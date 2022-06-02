@@ -1,0 +1,81 @@
+{
+    "symbols": {
+        "IBM": {
+            "open": "138.2000",
+            "close": "138.8400",
+            "date": "2022-05-31",
+            "Name": "International Business Machines Corporation"
+        },
+        "AAPL": {
+            "open": "149.0700",
+            "close": "148.8400",
+            "date": "2022-05-31",
+            "Name": "Apple Inc"
+        },
+        "BA": {
+            "open": "131.0300",
+            "close": "131.4000",
+            "date": "2022-05-31",
+            "Name": "The Boeing Company"
+        },
+        "GOOGL": {
+            "open": "2254.9300",
+            "close": "2275.2400",
+            "date": "2022-05-31",
+            "Name": "Alphabet Inc"
+        },
+        "DIS": {
+            "open": "110.0000",
+            "close": "110.4400",
+            "date": "2022-05-31",
+            "Name": "The Walt Disney Company"
+        },
+        "NKE": {
+            "open": "117.5000",
+            "close": "118.8500",
+            "date": "2022-05-31",
+            "Name": "Nike Inc"
+        },
+        "AMZN": {
+            "open": "2325.6000",
+            "close": "2404.1900",
+            "date": "2022-05-31"
+        },
+        "FB": {
+            "open": "196.5100",
+            "close": "188.6400",
+            "date": "2022-06-01",
+            "Name": "Meta Platforms Inc."
+        },
+        "NFLX": {
+            "open": "198.7000",
+            "close": "192.9100",
+            "date": "2022-06-01",
+            "Name": "Netflix Inc"
+        },
+        "F": {
+            "open": "13.8800",
+            "close": "13.5500",
+            "date": "2022-06-01",
+            "Name": "Ford Motor Company"
+        },
+        "MSFT": {
+            "open": "275.2000",
+            "close": "272.4200",
+            "date": "2022-06-01",
+            "Name": "Microsoft Corporation"
+        },
+        "TSLA": {
+            "open": "755.1600",
+            "close": "740.3700",
+            "date": "2022-06-01",
+            "Name": "Tesla Inc"
+        },
+        "MCD": {
+            "open": "253.1900",
+            "close": "249.2800",
+            "date": "2022-06-01",
+            "Name": "McDonald`s Corp"
+        }
+    }
+}
