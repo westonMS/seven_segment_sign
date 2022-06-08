@@ -2,6 +2,7 @@ import re
 import requests
 import json
 import datetime
+import math
 
 
 class Text_Scroll:
@@ -22,6 +23,7 @@ class Text_Scroll:
         self.screen = screen
         self.x = self.changeText()
         # init demo/game specific variables here
+        # TICKER
         self.defaultSymbol = [
             "BA",
             "IBM",
@@ -32,6 +34,7 @@ class Text_Scroll:
             "FB",
             "NFLX",
             "F",
+            "AMZN",
             "MSFT",
             "TSLA",
             "MCD",
@@ -48,6 +51,12 @@ class Text_Scroll:
         self.third_line_text = ""
         self.extra_line_one_text = ""
         self.extra_line_two_text = ""
+        # INFOBOX
+        self.info_box_symbol = "IBM"
+        self.info_box_name = ""
+        self.info_box_values = []
+        self.counter = counter()
+        self.infobox = setupINFOBOX(self)
 
     def changeText(self):
         first_ind = 0
@@ -70,40 +79,80 @@ class Text_Scroll:
         for i in self.defaultSymbol:
             addCompanyData(i)
         # Create generator here
+        next(self.infobox)
         while True:
+            counter_value = next(self.counter)
+            if counter_value == 16:
+                next(self.infobox)
+                print("Next")
+                print(self.info_box_name)
+                print(self.info_box_symbol)
+            # -- Ticker --
+            # Causes text to scroll
             next(self.x)
+
+            # TOP LINE TICKER
             self.screen.draw_hline(start_y=3, start_x=0, length=48, push=True)
+            # BOTTOM LINE TICKER
             self.screen.draw_hline(start_y=15, start_x=0, length=48, push=True)
+            # First line ticker
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
                 self.screen.y_height // 2 - 20,
                 self.first_line_text,
                 push=False,
             )
+            # Second line Ticker
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
                 self.screen.y_height // 2 - 18,
                 self.extra_line_one_text,
                 push=False,
             )
+            # Third Line Ticker
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
                 self.screen.y_height // 2 - 16,
                 self.second_line_text,
                 push=False,
             )
+            # Fourth Line Ticker
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
                 self.screen.y_height // 2 - 14,
                 self.extra_line_two_text,
                 push=False,
             )
+            # Fifth Line Ticker
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
                 self.screen.y_height // 2 - 12,
                 self.third_line_text,
+                push=False,
+            )
+            ## -- Info Box and Graph --
+            # Company Symbol
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 20,
+                self.screen.y_height // 2 - 4,
+                self.info_box_symbol,
+                push=False,
+            )
+            # Reset Company Name
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 24,
+                self.screen.y_height // 2 - 0,
+                " " * 48,
+                push=False,
+            )
+            # Company Name
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 20,
+                self.screen.y_height // 2 - 0,
+                self.info_box_name,
                 push=True,
             )
+
             yield
 
     def stop(self):
@@ -208,7 +257,9 @@ def dateCheck(symbol):
 def getData(symbol):
     addSymbol(symbol)
     if not dateCheck(symbol):  # If its not up to date, reload the data
+        print("UPDATING SMTH")
         data = getNumbers(symbol)  # Get the data
+        getINTRADAY(symbol)
         if type(data) is list:  # If its a list update
             setData(symbol, data)
     else:
@@ -240,10 +291,10 @@ def superLines(self):
         values = makeLines(i)
         whitespace = spaces - len(values[0])
         line1 += whitespace * " " + values[0]
-        print(line1)
+        # print(line1)
         whitespace = spaces - len(values[1])
         line2 += whitespace * " " + values[1]
-        print(line2)
+        # print(line2)
         whitespace = spaces - 1 - len(values[4])
         line3 += whitespace * " " + values[4] + "%"
         line4 += spaces * " "
@@ -260,7 +311,7 @@ def superLines(self):
             line2 += "   88888  l"
             line5 += "    888   l"
             line3 += "     8    l"
-        print(line3)
+        # print(line3)
     line1 += line1 * 10
     line2 += line2 * 10
     line3 += line3 * 10
@@ -276,6 +327,7 @@ def addCompanyData(symbol):
             data = json.load(f)
             data["symbols"][symbol]["Name"]
     except:
+        print("Finding " + symbol + " name")
         url = (
             "https://www.alphavantage.co/query?function=OVERVIEW&symbol=%s&apikey==AVLP38QDYPWJ4NEP"
             % symbol
@@ -286,9 +338,115 @@ def addCompanyData(symbol):
             data = json.load(f)
             try:
                 print(name["Name"])
+                # print("Updating JSON")
                 data["symbols"][symbol]["Name"] = name["Name"]
                 f.seek(0)  # <--- should reset file position to the beginning.
                 json.dump(data, f, indent=4)
                 f.truncate()  # remove remaining part
             except:
                 pass
+
+
+def counter():
+    i = 0
+    while True:
+        i += 1
+        yield i
+        if i > 20:
+            i = 0
+
+
+def setupINFOBOX(self):
+    hours = [
+        "10:00:00",
+        "11:00:00",
+        "12:00:00",
+        "13:00:00",
+        "14:00:00",
+        "15:00:00",
+        "16:00:00",
+        "17:00:00",
+        "18:00:00",
+        "19:00:00",
+        "20:00:00",
+    ]
+    while True:
+        for i in self.defaultSymbol:
+            with open("demos/text_scroll/data.json", "r+") as f:
+                try:
+                    # Get Name
+                    data = json.load(f)
+                    self.info_box_symbol = i + " " * 6
+                    self.info_box_name = data["symbols"][i]["Name"]
+                    self.info_box_name = self.info_box_name.upper()
+                    self.info_box_values = []
+                except:
+                    continue
+            yield
+
+    pass
+
+
+def getINTRADAY(symbol):
+    print("INTRADAY")
+    date = getDate()
+    yesterday = getYesterday()
+    hours = [
+        "10:00:00",
+        "11:00:00",
+        "12:00:00",
+        "13:00:00",
+        "14:00:00",
+        "15:00:00",
+        "16:00:00",
+        "17:00:00",
+        "18:00:00",
+        "19:00:00",
+        "20:00:00",
+    ]
+    url = (
+        "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=60min&apikey=AVLP38QDYPWJ4NEP"
+        % symbol
+    )
+    r = requests.get(url)
+    data = r.json()
+    json_formatted_str = json.dumps(data, indent=2)
+    # print(json_formatted_str)
+    values = []
+    try:
+        for i in hours:
+            time = date + " " + i
+            print(data["Time Series (60min)"][time]["1. open"])
+            values.append(float(data["Time Series (60min)"][time]["1. open"]))
+    except:
+        try:
+            for i in hours:
+                date = yesterday
+                time = date + " " + i
+                print(data["Time Series (60min)"][time]["1. open"])
+                values.append(float(data["Time Series (60min)"][time]["1. open"]))
+        except:
+            pass
+    # print(values)
+    # print((max(values)))
+    # print(min(values))
+    maximum = max(values)
+    minimum = min(values)
+    line_height = 10
+    line_width = (maximum - minimum) / line_height
+    heights = []
+    print("asdfjkl;")
+    for i in values:
+        heights.append(math.ceil((i - minimum) / line_width))
+    with open("demos/text_scroll/data.json", "r+") as f:
+        data = json.load(f)
+        print("Updating JSON")
+        print(values)
+        for i in range(9):
+            print(i)
+            data["symbols"][symbol][hours[i]] = values[i]
+            print(data["symbols"][symbol][hours[i]])
+        f.seek(0)  # <--- should reset file position to the beginning.
+        json.dump(data, f, indent=4)
+        f.truncate()  # remove remaining part
+    print("UPdated all of those cool things.")
