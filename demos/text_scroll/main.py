@@ -1,4 +1,5 @@
 import re
+from selectors import DefaultSelector
 import requests
 import json
 import datetime
@@ -54,9 +55,12 @@ class Text_Scroll:
         # INFOBOX
         self.info_box_symbol = "IBM"
         self.info_box_name = ""
-        self.info_box_values = []
+        self.info_box_open = ""
+        self.info_box_close = ""
+        self.info_box_percent = ""
         self.counter = counter()
         self.infobox = setupINFOBOX(self)
+        self.graph = []
 
     def changeText(self):
         first_ind = 0
@@ -95,6 +99,9 @@ class Text_Scroll:
             self.screen.draw_hline(start_y=3, start_x=0, length=48, push=True)
             # BOTTOM LINE TICKER
             self.screen.draw_hline(start_y=15, start_x=0, length=48, push=True)
+            # GRAPH LINE
+            self.screen.draw_hline(start_y=44, start_x=16, length=20, push=True)
+            self.screen.draw_vline(start_y=-20, start_x=16, length=20, push=True)
             # First line ticker
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
@@ -131,28 +138,63 @@ class Text_Scroll:
                 push=False,
             )
             ## -- Info Box and Graph --
-            # Company Symbol
-            self.screen.draw_text(
-                self.screen.x_width // 2 - 20,
-                self.screen.y_height // 2 - 4,
-                self.info_box_symbol,
-                push=False,
-            )
+
             # Reset Company Name
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
-                self.screen.y_height // 2 - 0,
+                self.screen.y_height // 2 - 6,
                 " " * 48,
                 push=False,
             )
             # Company Name
             self.screen.draw_text(
                 self.screen.x_width // 2 - 20,
-                self.screen.y_height // 2 - 0,
+                self.screen.y_height // 2 - 6,
                 self.info_box_name,
+                push=False,
+            )
+            # Graph
+            l = 4
+            for i in self.graph:
+                self.screen.draw_text(
+                    self.screen.x_width // 2 - 8,
+                    self.screen.y_height // 2 - l,
+                    i,
+                    push=False,
+                )
+                l -= 2
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 4,
+                self.screen.y_height // 2 - -22,
+                "1 Day GRAPH",
+                push=False,
+            )
+            # Daily Numbers
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 24,
+                self.screen.y_height // 2 - -4,
+                "OPEN: " + self.info_box_open,
+                push=False,
+            )
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 24,
+                self.screen.y_height // 2 - -6,
+                "CLOSE: " + self.info_box_close,
+                push=False,
+            )
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 24,
+                self.screen.y_height // 2 - -8,
+                "CHANGE: " + self.info_box_percent,
+                push=False,
+            )
+            # Company Symbol
+            self.screen.draw_text(
+                self.screen.x_width // 2 - 20,
+                self.screen.y_height // 2 - 2,
+                self.info_box_symbol,
                 push=True,
             )
-
             yield
 
     def stop(self):
@@ -212,6 +254,9 @@ def getNumbers(symbol):
 def setData(symbol, numbers):
     print(symbol)
     print(numbers)
+    open_value = numbers[0]
+    close = numbers[1]
+    date = numbers[2]
     with open("demos/text_scroll/data.json", "r+") as f:
         data = json.load(f)
         temp = data["symbols"]
@@ -220,9 +265,10 @@ def setData(symbol, numbers):
             numbers[1]
         except:
             return 1
-        values = {"open": numbers[0], "close": numbers[1], "date": numbers[2]}
-        temp[symbol] = values
         data["symbols"] = temp  # <--- add `id` value.
+        data["symbols"][symbol]["open"] = open_value
+        data["symbols"][symbol]["close"] = close
+        data["symbols"][symbol]["date"] = date
         f.seek(0)  # <--- should reset file position to the beginning.
         json.dump(data, f, indent=4)
         f.truncate()  # remove remaining part
@@ -259,9 +305,10 @@ def getData(symbol):
     if not dateCheck(symbol):  # If its not up to date, reload the data
         print("UPDATING SMTH")
         data = getNumbers(symbol)  # Get the data
-        getINTRADAY(symbol)
         if type(data) is list:  # If its a list update
             setData(symbol, data)
+        getINTRADAY(symbol)
+
     else:
         print("Up to date")
 
@@ -368,10 +415,13 @@ def setupINFOBOX(self):
         "17:00:00",
         "18:00:00",
         "19:00:00",
-        "20:00:00",
     ]
     while True:
         for i in self.defaultSymbol:
+            if not dateCheck(i):
+                getData(i)
+                getINTRADAY(i)
+            self.graph = makeGraph(i)
             with open("demos/text_scroll/data.json", "r+") as f:
                 try:
                     # Get Name
@@ -379,7 +429,20 @@ def setupINFOBOX(self):
                     self.info_box_symbol = i + " " * 6
                     self.info_box_name = data["symbols"][i]["Name"]
                     self.info_box_name = self.info_box_name.upper()
-                    self.info_box_values = []
+                    open_value = round(float(data["symbols"][i]["open"]), 3)
+                    close_value = round(float(data["symbols"][i]["close"]), 3)
+                    self.info_box_open = str(open_value)
+                    self.info_box_close = str(close_value)
+                    self.info_box_percent = (
+                        str(
+                            round(
+                                100 * (close_value / open_value - 1),
+                                3,
+                            )
+                        )
+                        + "%"
+                    )
+
                 except:
                     continue
             yield
@@ -402,7 +465,6 @@ def getINTRADAY(symbol):
         "17:00:00",
         "18:00:00",
         "19:00:00",
-        "20:00:00",
     ]
     url = (
         "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=%s&interval=60min&apikey=AVLP38QDYPWJ4NEP"
@@ -430,23 +492,98 @@ def getINTRADAY(symbol):
     # print(values)
     # print((max(values)))
     # print(min(values))
-    maximum = max(values)
+    try:
+        maximum = max(values)
+    except:
+        print("API Call Failed")
+        return 1
     minimum = min(values)
     line_height = 10
     line_width = (maximum - minimum) / line_height
     heights = []
-    print("asdfjkl;")
     for i in values:
         heights.append(math.ceil((i - minimum) / line_width))
+    for i in range(len(values)):
+        with open("demos/text_scroll/data.json", "r+") as f:
+            data = json.load(f)
+            hour = hours[i]
+            value = values[i]
+            data["symbols"][symbol][hour] = value
+            print(data["symbols"][symbol][hours[i]])
+            f.seek(0)  # <--- should reset file position to the beginning.
+            json.dump(data, f, indent=4)
+            f.truncate()  # remove remaining part
+    print("Updated all of those cool things.")
+
+
+def makeGraph(symbol):
+    hours = [
+        "10:00:00",
+        "11:00:00",
+        "12:00:00",
+        "13:00:00",
+        "14:00:00",
+        "15:00:00",
+        "16:00:00",
+        "17:00:00",
+        "18:00:00",
+        "19:00:00",
+    ]
+    values = []
+    print(symbol)
     with open("demos/text_scroll/data.json", "r+") as f:
         data = json.load(f)
-        print("Updating JSON")
-        print(values)
-        for i in range(9):
-            print(i)
-            data["symbols"][symbol][hours[i]] = values[i]
-            print(data["symbols"][symbol][hours[i]])
-        f.seek(0)  # <--- should reset file position to the beginning.
-        json.dump(data, f, indent=4)
-        f.truncate()  # remove remaining part
-    print("UPdated all of those cool things.")
+        for i in range(len(hours)):
+            try:
+                x = data["symbols"][symbol]["Name"]
+                values.append(data["symbols"][symbol][hours[i]])
+            except:
+                print("Invalid Hour " + hours[i])
+                continue
+    try:
+        maximum = max(values)
+        # print(maximum)
+    except:
+        return 1
+    minimum = min(values)
+    line_height = 10
+    # print(minimum)
+    line_width = (maximum - minimum) / line_height
+    heights = []
+    for i in values:
+        heights.append(math.ceil((i - minimum) / line_width))
+    # print(heights)
+    lines = ["" for i in range(line_height + 1)]
+    h = 0
+    for j in heights:
+        for i in range(len(lines)):
+            lines[i] += "  "
+            # print(i)
+            # print(j)
+            if i == j:
+                lines[i] = lines[i][:-2]
+                lines[i] += "__"
+        try:
+            print(heights[h])
+            print(heights[h + 1])
+            if heights[h] < heights[h + 1]:
+                print("CHANGING TO L")
+                lines[heights[h]] = lines[heights[h]][:-1]
+                lines[heights[h]] += "j"
+                for z in range(heights[h] + 1, heights[h + 1]):
+                    lines[z] = lines[z][:-1]
+                    lines[z] += "1"
+                pass
+            # elif heights[h] > heights[h + 1]:
+            #     print("CHANGING TO LOWER")
+            #     for z in range(heights[h + 1], heights[h]):
+            #         lines[heights[z]] = lines[z][:-1]
+            #         lines[heights[z]] += "1"
+        except:
+            pass
+        h += 1
+    lines.reverse()
+    for i in lines:
+        print(i)
+    print(lines)
+    return lines
