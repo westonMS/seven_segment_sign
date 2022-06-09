@@ -100,8 +100,8 @@ class Text_Scroll:
             # BOTTOM LINE TICKER
             self.screen.draw_hline(start_y=15, start_x=0, length=48, push=True)
             # GRAPH LINE
-            self.screen.draw_hline(start_y=44, start_x=16, length=20, push=True)
-            self.screen.draw_vline(start_y=-20, start_x=16, length=20, push=True)
+            self.screen.draw_hline(start_y=44, start_x=18, length=22, push=True)
+            self.screen.draw_vline(start_y=-26, start_x=18, length=22, push=True)
             # First line ticker
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
@@ -143,7 +143,7 @@ class Text_Scroll:
             self.screen.draw_text(
                 self.screen.x_width // 2 - 24,
                 self.screen.y_height // 2 - 6,
-                " " * 48,
+                " " * 36,
                 push=False,
             )
             # Company Name
@@ -157,33 +157,33 @@ class Text_Scroll:
             l = 4
             for i in self.graph:
                 self.screen.draw_text(
-                    self.screen.x_width // 2 - 8,
+                    self.screen.x_width // 2 - 4,
                     self.screen.y_height // 2 - l,
                     i,
                     push=False,
                 )
                 l -= 2
             self.screen.draw_text(
-                self.screen.x_width // 2 - 4,
+                self.screen.x_width // 2 - 0,
                 self.screen.y_height // 2 - -22,
                 "1 Day GRAPH",
                 push=False,
             )
             # Daily Numbers
             self.screen.draw_text(
-                self.screen.x_width // 2 - 24,
+                self.screen.x_width // 2 - 22,
                 self.screen.y_height // 2 - -4,
                 "OPEN: " + self.info_box_open,
                 push=False,
             )
             self.screen.draw_text(
-                self.screen.x_width // 2 - 24,
+                self.screen.x_width // 2 - 22,
                 self.screen.y_height // 2 - -6,
                 "CLOSE: " + self.info_box_close,
                 push=False,
             )
             self.screen.draw_text(
-                self.screen.x_width // 2 - 24,
+                self.screen.x_width // 2 - 22,
                 self.screen.y_height // 2 - -8,
                 "CHANGE: " + self.info_box_percent,
                 push=False,
@@ -574,11 +574,16 @@ def makeGraph(symbol):
                     lines[z] = lines[z][:-1]
                     lines[z] += "1"
                 pass
-            # elif heights[h] > heights[h + 1]:
-            #     print("CHANGING TO LOWER")
-            #     for z in range(heights[h + 1], heights[h]):
-            #         lines[heights[z]] = lines[z][:-1]
-            #         lines[heights[z]] += "1"
+            elif heights[h] > heights[h + 1]:
+                lines[heights[h + 1]] = lines[heights[h + 1]][:-1]
+                lines[heights[h + 1]] += "1"
+                lines[heights[h] - 1] = lines[heights[h] - 1][:-1]
+                lines[heights[h] - 1] += "1"
+                for c in range(2, 10):
+                    if heights[h] - c > heights[h + 1]:
+                        lines[heights[h] - c] = lines[heights[h] - c][:-1]
+                        lines[heights[h] - c] += "1"
+                print("Height A" + str(heights[h]) + "Height B" + str(heights[h + 1]))
         except:
             pass
         h += 1
